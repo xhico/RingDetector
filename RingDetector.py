@@ -1,16 +1,10 @@
 import logging
 import os
+import time
 import traceback
 
 import numpy as np
 import pyaudio
-
-# Constants
-CHUNK_SIZE = 2048
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 44100
-SIMILARITY_THRESHOLD = 0.9
 
 
 def initialize_stream():
@@ -88,38 +82,47 @@ def main():
     Main function to monitor microphone volume and detect doorbell rings.
     """
 
+    logger.info("--------------------")
     logger.info("Monitoring microphone volume. Press Ctrl+C to exit.")
-
-    # Initialize PyAudio stream
-    logger.info("Initialize PyAudio stream")
-    p, stream = initialize_stream()
-
     doorbell_rang = False
-    try:
-        while True:
 
-            # Get current volume level from the microphone stream
-            volume = get_volume(stream)
+    while True:
 
-            # Check for doorbell ring
-            if volume > 50 and not doorbell_rang:
-                logger.info("Doorbell Ring!")
-                doorbell_rang = True
-            elif volume <= 20 and doorbell_rang:
-                logger.info("Doorbell Stopped!")
-                doorbell_rang = False
+        # Get current volume level from the microphone stream
+        volume = get_volume(stream)
 
-    except Exception:
-        logger.error(traceback.format_exc())
-    finally:
-        logger.info("Close the stream and terminate PyAudio on program exit")
-        close_stream(p, stream)
+        # Check for doorbell ring
+        if volume > 50 and not doorbell_rang:
+            logger.info("Doorbell Ring!")
+            doorbell_rang = True
+        elif volume <= 20 and doorbell_rang:
+            logger.info("Doorbell Stopped!")
+            doorbell_rang = False
+        time.sleep(0.1)
 
 
 if __name__ == "__main__":
     # Set Logging
     LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"{os.path.abspath(__file__).replace('.py', '.log')}")
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler()])
+    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s", handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler()])
     logger = logging.getLogger()
 
-    main()
+    # Constants
+    CHUNK_SIZE = 2048
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 1
+    RATE = 44100
+    SIMILARITY_THRESHOLD = 0.9
+
+    # Initialize PyAudio stream
+    logger.info("Initialize PyAudio stream")
+    p, stream = initialize_stream()
+
+    try:
+        main()
+    except Exception as ex:
+        logger.error(traceback.format_exc())
+    finally:
+        logger.info("Close the stream and terminate PyAudio on program exit")
+        close_stream(p, stream)
+        logger.info("End")
