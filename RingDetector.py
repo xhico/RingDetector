@@ -53,8 +53,10 @@ def close_stream():
 
     logging.info("Closing PyAudio stream...")
 
-    # Close the PyAudio stream
-    stream.close()
+    # Stop / Close the PyAudio stream
+    if stream.is_active():
+        stream.stop_stream()
+        stream.close()
 
     # Terminate the PyAudio instance
     p.terminate()
@@ -69,7 +71,8 @@ def get_volume():
     """
 
     # Start streaming audio from the microphone
-    stream.start_stream()
+    if stream.is_stopped():
+        stream.start_stream()
 
     # Read audio data from the stream
     data = stream.read(CHUNK_SIZE, exception_on_overflow=True)
@@ -81,7 +84,8 @@ def get_volume():
     volume = np.abs(data).mean()
 
     # Stop streaming audio
-    stream.stop_stream()
+    if stream.is_active():
+        stream.stop_stream()
 
     return volume
 
