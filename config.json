@@ -1,0 +1,6 @@
+{
+  "CHUNK_SIZE": 1024,
+  "CHANNELS": 1,
+  "RATE": 44100,
+  "SIMILARITY_THRESHOLD": 0.9
+}

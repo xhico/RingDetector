@@ -1,15 +1,32 @@
+import json
 import logging
+import os
 
 import numpy as np
 import pyaudio
 
 # Constants
-CHUNK_SIZE = 1024
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 44100
-SIMILARITY_THRESHOLD = 0.9
 global p, stream
+FORMAT = pyaudio.paInt16
+global CHUNK_SIZE
+global CHANNELS
+global RATE
+global SIMILARITY_THRESHOLD
+
+
+def load_config():
+    config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+    with open(config_file) as in_file:
+        config = json.load(in_file)
+
+    global CHUNK_SIZE
+    global CHANNELS
+    global RATE
+    global SIMILARITY_THRESHOLD
+    CHUNK_SIZE = config["CHUNK_SIZE"]
+    CHANNELS = config["CHANNELS"]
+    RATE = config["RATE"]
+    SIMILARITY_THRESHOLD = config["SIMILARITY_THRESHOLD"]
 
 
 def init_stream():

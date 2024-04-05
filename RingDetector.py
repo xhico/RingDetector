@@ -5,7 +5,7 @@ import sys
 import time
 import traceback
 
-from utils import init_stream, close_stream, get_volume
+from utils import load_config, init_stream, close_stream, get_volume
 
 
 def signal_handler(sig, frame):
@@ -33,6 +33,9 @@ def main():
     """
     Main function to monitor microphone volume.
     """
+
+    # Load Config
+    load_config()
 
     # Initialize PyAudio stream for audio input.
     init_stream()
