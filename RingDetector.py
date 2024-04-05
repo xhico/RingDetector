@@ -40,7 +40,7 @@ def close_stream():
     """
 
     # Stop && Close PyAudio stream and terminate PyAudio.
-    logger.info("Close the stream and terminate PyAudio on program exit")
+    logger.info("Closing the stream and terminate PyAudio")
     stream.stop_stream()
     stream.close()
     p.terminate()
@@ -55,7 +55,7 @@ def get_volume():
     """
 
     # Read audio data from the stream and calculate the average volume
-    data = np.frombuffer(stream.read(CHUNK_SIZE, exception_on_overflow=False), dtype=np.int16)
+    data = np.frombuffer(stream.read(CHUNK_SIZE, exception_on_overflow=False), dtype=VOLUME_DTYPE)
     volume = np.abs(data).mean()
     return volume
 
@@ -88,15 +88,13 @@ def main():
     Main function to monitor microphone volume and detect doorbell rings.
     """
 
-    logger.info("--------------------")
-    logger.info("Monitoring microphone volume. Press Ctrl+C to exit.")
+    logger.info("Monitoring microphone volume")
     doorbell_rang = False
 
     while True:
 
         # Get current volume level from the microphone stream
         volume = get_volume()
-        logger.info(volume)
 
         # Check for doorbell ring
         if volume > 50 and not doorbell_rang:
@@ -105,6 +103,8 @@ def main():
         elif volume <= 20 and doorbell_rang:
             logger.info("Doorbell Stopped!")
             doorbell_rang = False
+
+        # Sleep
         time.sleep(0.1)
 
 
@@ -114,11 +114,14 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler()])
     logger = logging.getLogger()
 
+    logger.info("--------------------")
+
     # Constants
     CHUNK_SIZE = 2048
     FORMAT = pyaudio.paInt16
     CHANNELS = 1
     RATE = 44100
+    VOLUME_DTYPE = np.int16
     SIMILARITY_THRESHOLD = 0.9
 
     # Initialize PyAudio stream
