@@ -5,10 +5,9 @@ import time
 import traceback
 
 import pandas as pd
-from sklearn.linear_model import LinearRegression
 
 import config
-from utils import init_stream, close_stream, filtered_data, get_volume
+from utils import init_stream, close_stream, filtered_data, get_volume, calculate_metrics
 
 # Load Config
 config = config.load_config()
@@ -61,25 +60,15 @@ def main():
     df = pd.DataFrame(volume_data)
 
     # Filter anomalies
-    df = filtered_data(df)
-
-    # Calculate mean and standard deviation of volume
-    mean_volume = df['volume'].mean()
-    std_volume = df['volume'].std()
+    df, mean_volume, std_volume = filtered_data(df)
 
     # Calculate rate of change of volume over time (slope of linear regression)
-    X = df['timestamp'].values.reshape(-1, 1)
-    y = df['volume'].values.reshape(-1, 1)
-    reg = LinearRegression().fit(X, y)
-    trend = reg.coef_[0][0]
-
-    # Calculate correlation between timestamps and volumes
-    corr = df['timestamp'].corr(df['volume'])
+    reg, trend, corr = calculate_metrics(df)
 
     # Saved metrics
-    metrics = {"mean_volume": mean_volume, "std_volume": std_volume, "trend": trend, "corr": corr}
     metrics_data_file = os.path.join(data_folder, "saved_metrics.json")
     with open(metrics_data_file, "w") as out_file:
+        metrics = {"mean_volume": mean_volume, "std_volume": std_volume, "trend": trend, "corr": corr}
         json.dump(metrics, out_file, indent=4)
 
 
