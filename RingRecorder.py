@@ -3,6 +3,8 @@ import os
 import time
 import traceback
 
+import pandas as pd
+
 from utils import load_config, init_stream, close_stream, get_volume
 
 
@@ -23,32 +25,44 @@ def main():
     # Initialize an empty list to store volume data
     volume_data = []
 
-    # Record volume data for 5 seconds
-    start_time = time.time()
-    while True:
-        # Break the loop after 5 seconds
-        if time.time() - start_time >= 5:
-            break
+    # Record volume data for X seconds
+    start_timestamp = time.time_ns()
+    end_timestamp = start_timestamp + (4 * 1000000000)
+    while time.time_ns() < end_timestamp:
+        # Get the current timestamp
+        timestamp = time.time_ns()
 
         # Get the current volume
         volume = get_volume()
 
-        # Append the volume to the list
-        volume_data.append(volume)
+        # Append timestamp and volume to the list
+        volume_data.append({"timestamp": timestamp, "volume": volume})
 
-        # Log the current volume
-        logger.info(f"Volume - {volume}")
+        # Log the current volume and timestamp
+        logger.info(f"Timestamp - {timestamp} | Volume - {volume}")
 
-        # Wait for 0.1 seconds before taking the next reading
-        time.sleep(0.1)
+        # Wait for X seconds before taking the next reading
+        time.sleep(0.001)
 
     # Log the end of recording and the number of data points recorded
     logger.info(f"Recorded {len(volume_data)} points")
 
-    # Write Volume Data to file
-    volume_data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "volume_data.data")
-    with open(volume_data_file, "w") as out_file:
-        out_file.writelines("\n".join(map(str, volume_data)))
+    # Convert volume_data to a DataFrame
+    df = pd.DataFrame(volume_data)
+
+    # Calculate mean and standard deviation of volume
+    mean_volume = df['volume'].mean()
+    std_volume = df['volume'].std()
+
+    # Define a threshold for anomalies (e.g., 3 standard deviations from the mean)
+    threshold = 10 * std_volume
+
+    # Filter out anomalies
+    filtered_df = df[abs(df['volume'] - mean_volume) < threshold]
+
+    # Write filtered data to a CSV file
+    filtered_volume_data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "volume_data.csv")
+    filtered_df.to_csv(filtered_volume_data_file, index=False)
 
 
 if __name__ == "__main__":
