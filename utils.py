@@ -1,32 +1,18 @@
-import json
 import logging
-import os
 
 import numpy as np
 import pyaudio
 
+import config
+
 # Constants
 global p, stream
-FORMAT = pyaudio.paInt16
-global CHUNK_SIZE
-global CHANNELS
-global RATE
-global SIMILARITY_THRESHOLD
 
-
-def load_config():
-    config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
-    with open(config_file) as in_file:
-        config = json.load(in_file)
-
-    global CHUNK_SIZE
-    global CHANNELS
-    global RATE
-    global SIMILARITY_THRESHOLD
-    CHUNK_SIZE = config["CHUNK_SIZE"]
-    CHANNELS = config["CHANNELS"]
-    RATE = config["RATE"]
-    SIMILARITY_THRESHOLD = config["SIMILARITY_THRESHOLD"]
+# Load Config
+config = config.load_config()
+CHUNK_SIZE = config["CHUNK_SIZE"]
+CHANNELS = config["CHANNELS"]
+RATE = config["RATE"]
 
 
 def init_stream():
@@ -42,7 +28,7 @@ def init_stream():
 
     # Open a PyAudio stream with specified parameters
     global stream
-    stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK_SIZE)
+    stream = p.open(format=pyaudio.paInt16, channels=config["CHANNELS"], rate=config["RATE"], input=True, frames_per_buffer=config["CHUNK_SIZE"])
 
 
 def close_stream():
@@ -89,23 +75,15 @@ def get_volume():
     return volume
 
 
-def check_similarity(data1, data2):
-    """
-    Check the similarity between two sets of volume readings.
+def filtered_data(df):
+    # Calculate mean and standard deviation of volume
+    mean_volume = df['volume'].mean()
+    std_volume = df['volume'].std()
 
-    Args:
-    - data1 (list or numpy array): First set of volume readings.
-    - data2 (list or numpy array): Second set of volume readings.
+    # Define a threshold for anomalies (e.g., 3 standard deviations from the mean)
+    threshold = 10 * std_volume
 
-    Returns:
-    - bool: True if the datasets are similar, False otherwise.
-    """
-    # Convert data to numpy arrays if they are not already
-    data1 = np.array(data1)
-    data2 = np.array(data2)
+    # Filter out anomalies
+    filtered_df = df[abs(df['volume'] - mean_volume) < threshold]
 
-    # Calculate Pearson correlation coefficient
-    correlation = np.corrcoef(data1, data2)[0, 1]
-
-    # Return True if correlation coefficient is above the threshold
-    return correlation >= SIMILARITY_THRESHOLD
+    return filtered_df

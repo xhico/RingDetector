@@ -1,11 +1,20 @@
+import json
 import logging
 import os
 import time
 import traceback
 
 import pandas as pd
+from sklearn.linear_model import LinearRegression
 
-from utils import load_config, init_stream, close_stream, get_volume
+import config
+from utils import init_stream, close_stream, filtered_data, get_volume
+
+# Load Config
+config = config.load_config()
+CHUNK_SIZE = config["CHUNK_SIZE"]
+CHANNELS = config["CHANNELS"]
+RATE = config["RATE"]
 
 
 def main():
@@ -13,8 +22,9 @@ def main():
     Main function to monitor microphone volume.
     """
 
-    # Load Config
-    load_config()
+    # Create data_folder
+    data_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+    os.makedirs(data_folder, exist_ok=True)
 
     # Initialize PyAudio stream for audio input.
     init_stream()
@@ -47,22 +57,30 @@ def main():
     # Log the end of recording and the number of data points recorded
     logger.info(f"Recorded {len(volume_data)} points")
 
-    # Convert volume_data to a DataFrame
+    # Load DataFrame
     df = pd.DataFrame(volume_data)
+
+    # Filter anomalies
+    df = filtered_data(df)
 
     # Calculate mean and standard deviation of volume
     mean_volume = df['volume'].mean()
     std_volume = df['volume'].std()
 
-    # Define a threshold for anomalies (e.g., 3 standard deviations from the mean)
-    threshold = 10 * std_volume
+    # Calculate rate of change of volume over time (slope of linear regression)
+    X = df['timestamp'].values.reshape(-1, 1)
+    y = df['volume'].values.reshape(-1, 1)
+    reg = LinearRegression().fit(X, y)
+    trend = reg.coef_[0][0]
 
-    # Filter out anomalies
-    filtered_df = df[abs(df['volume'] - mean_volume) < threshold]
+    # Calculate correlation between timestamps and volumes
+    corr = df['timestamp'].corr(df['volume'])
 
-    # Write filtered data to a CSV file
-    filtered_volume_data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "volume_data.csv")
-    filtered_df.to_csv(filtered_volume_data_file, index=False)
+    # Saved metrics
+    metrics = {"mean_volume": mean_volume, "std_volume": std_volume, "trend": trend, "corr": corr}
+    metrics_data_file = os.path.join(data_folder, "saved_metrics.json")
+    with open(metrics_data_file, "w") as out_file:
+        json.dump(metrics, out_file, indent=4)
 
 
 if __name__ == "__main__":
