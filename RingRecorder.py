@@ -42,6 +42,11 @@ def main():
     # Log the end of recording and the number of data points recorded
     logger.info(f"Recorded {len(volume_data)} points")
 
+    # Write Volume Data to file
+    volume_data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "volume_data.data")
+    with open(volume_data_file, "w") as out_file:
+        out_file.writelines("\n".join(map(str, volume_data)))
+
 
 if __name__ == "__main__":
     # Set Logging
