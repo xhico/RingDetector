@@ -1,10 +1,21 @@
 import logging
 import os
+import signal
+import sys
 import time
 import traceback
 
 import numpy as np
 import pyaudio
+
+
+def signal_handler(sig, frame):
+    if sig == signal.SIGTERM:
+        logger.info("Script terminated by SIGTERM")
+        sys.exit(0)
+
+
+signal.signal(signal.SIGTERM, signal_handler)
 
 
 def initialize_stream():
@@ -17,32 +28,27 @@ def initialize_stream():
     """
 
     # Initialize PyAudio and open stream for microphone input
-    p = pyaudio.PyAudio()
-    stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK_SIZE)
-    return p, stream
+    logger.info("Initialize PyAudio stream")
+    _p = pyaudio.PyAudio()
+    _stream = _p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK_SIZE)
+    return _p, _stream
 
 
-def close_stream(p, stream):
+def close_stream():
     """
     Close PyAudio stream and terminate PyAudio.
-
-    Args:
-        p: PyAudio object.
-        stream: PyAudio stream object.
     """
 
     # Stop && Close PyAudio stream and terminate PyAudio.
+    logger.info("Close the stream and terminate PyAudio on program exit")
     stream.stop_stream()
     stream.close()
     p.terminate()
 
 
-def get_volume(stream):
+def get_volume():
     """
     Calculate the volume of audio data from the microphone stream.
-
-    Args:
-        stream: PyAudio stream object.
 
     Returns:
         float: The average volume of the audio data.
@@ -89,7 +95,8 @@ def main():
     while True:
 
         # Get current volume level from the microphone stream
-        volume = get_volume(stream)
+        volume = get_volume()
+        logger.info(volume)
 
         # Check for doorbell ring
         if volume > 50 and not doorbell_rang:
@@ -115,14 +122,14 @@ if __name__ == "__main__":
     SIMILARITY_THRESHOLD = 0.9
 
     # Initialize PyAudio stream
-    logger.info("Initialize PyAudio stream")
     p, stream = initialize_stream()
 
     try:
         main()
+    except KeyboardInterrupt:
+        logger.info("KeyboardInterrupt detected. Exiting...")
     except Exception as ex:
         logger.error(traceback.format_exc())
     finally:
-        logger.info("Close the stream and terminate PyAudio on program exit")
-        close_stream(p, stream)
+        close_stream()
         logger.info("End")
