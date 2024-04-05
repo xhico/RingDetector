@@ -40,7 +40,7 @@ def main():
     logger.info("Monitoring microphone volume")
     while True:
         volume = get_volume()
-        logger.info(volume)
+        logger.info(f"Volume - {volume}")
         time.sleep(0.1)
 
 
