@@ -16,16 +16,6 @@ Before running the script, ensure you have Python installed on your system along
    pip3 install -r requirements.txt
    ```
 
-   On MacOS
-   ```bash
-   brew install portaudio
-   ```
-
-   On Linux
-   ```bash
-   sudo apt install portaudio19-dev -y
-   ```   
-
 ## Usage
 
 To use this script:
@@ -43,17 +33,13 @@ To use this script:
 
 ### Constants
 
-- `CHUNK_SIZE`: Size of audio chunks to read from the microphone.
-- `FORMAT`: Audio format used by PyAudio (paInt16 for 16-bit PCM).
-- `CHANNELS`: Number of audio channels (1 for mono).
-- `RATE`: Sample rate of the audio input.
+- `DEVICE`: Device ID of the microphone.
 - `SIMILARITY_THRESHOLD`: Threshold for determining similarity between volume readings.
+- `VOLUME`: Current Volume
 
 ### Functions
 
-- `initialize_stream()`: Initialize PyAudio stream for microphone input.
-- `close_stream(p, stream)`: Close PyAudio stream and terminate PyAudio.
-- `get_volume(stream)`: Calculate the volume of audio data from the microphone stream.
+- `get_volume(indata, frames, time, status)`: Calculate the volume of audio data from the microphone stream.
 - `check_similarity(data1, data2)`: Check the similarity between two sets of volume readings.
 - `main()`: Main function to monitor microphone volume and detect doorbell rings.
 
