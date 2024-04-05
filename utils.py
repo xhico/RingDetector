@@ -10,10 +10,10 @@ import config
 global p, stream
 
 # Load Config
-config = config.load_config()
-CHUNK_SIZE = config["CHUNK_SIZE"]
-CHANNELS = config["CHANNELS"]
-RATE = config["RATE"]
+saved_config = config.load_config()
+CHUNK_SIZE = saved_config["CHUNK_SIZE"]
+CHANNELS = saved_config["CHANNELS"]
+RATE = saved_config["RATE"]
 
 
 def init_stream():
@@ -29,7 +29,7 @@ def init_stream():
 
     # Open a PyAudio stream with specified parameters
     global stream
-    stream = p.open(format=pyaudio.paInt16, channels=config["CHANNELS"], rate=config["RATE"], input=True, frames_per_buffer=config["CHUNK_SIZE"])
+    stream = p.open(format=pyaudio.paInt16, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK_SIZE)
 
 
 def close_stream():

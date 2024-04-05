@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import signal
@@ -7,12 +8,6 @@ import traceback
 
 import config
 from utils import init_stream, close_stream, get_volume
-
-# Load Config
-config = config.load_config()
-CHUNK_SIZE = config["CHUNK_SIZE"]
-CHANNELS = config["CHANNELS"]
-RATE = config["RATE"]
 
 
 def signal_handler(sig, frame):
@@ -41,13 +36,19 @@ def main():
     Main function to monitor microphone volume.
     """
 
+    # Load Saved Data Metrics
+    logger.info("Load Saved Data Metrics")
+    with open(config.saved_metrics_data_file) as in_file:
+        saved_metrics_data = json.load(in_file)
+    number_of_records = saved_metrics_data["number_of_records"]
+
     # Initialize PyAudio stream for audio input.
     init_stream()
 
     # Log the start of recording volume data
     logger.info("Recording Volume Data")
 
-    # Initialize an empty list to store volume data
+    # Initialize a deque to store volume data with a maximum length of 63
     volume_data = []
 
     # Record volume
@@ -58,8 +59,12 @@ def main():
         # Get the current volume
         volume = get_volume()
 
-        # Append timestamp and volume to the list
-        volume_data.append({"timestamp": timestamp, "volume": volume})
+        # Check if volume_data size reaches {number_of_records} ? Remove the last entry
+        if len(volume_data) >= number_of_records:
+            volume_data.pop()
+
+        # Shift all entries one position forward
+        volume_data = [{"timestamp": timestamp, "volume": volume}] + volume_data
 
         # Log the current volume and timestamp
         logger.info(f"Timestamp - {timestamp} | Volume - {volume}")

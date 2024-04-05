@@ -9,12 +9,6 @@ import pandas as pd
 import config
 from utils import init_stream, close_stream, filtered_data, get_volume, calculate_metrics
 
-# Load Config
-config = config.load_config()
-CHUNK_SIZE = config["CHUNK_SIZE"]
-CHANNELS = config["CHANNELS"]
-RATE = config["RATE"]
-
 
 def main():
     """
@@ -22,8 +16,7 @@ def main():
     """
 
     # Create data_folder
-    data_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
-    os.makedirs(data_folder, exist_ok=True)
+    os.makedirs(config.data_folder, exist_ok=True)
 
     # Initialize PyAudio stream for audio input.
     init_stream()
@@ -54,7 +47,8 @@ def main():
         time.sleep(0.001)
 
     # Log the end of recording and the number of data points recorded
-    logger.info(f"Recorded {len(volume_data)} points")
+    number_of_records = len(volume_data)
+    logger.info(f"Recorded {number_of_records} points")
 
     # Load DataFrame
     df = pd.DataFrame(volume_data)
@@ -66,9 +60,8 @@ def main():
     reg, trend, corr = calculate_metrics(df)
 
     # Saved metrics
-    metrics_data_file = os.path.join(data_folder, "saved_metrics.json")
-    with open(metrics_data_file, "w") as out_file:
-        metrics = {"mean_volume": mean_volume, "std_volume": std_volume, "trend": trend, "corr": corr}
+    with open(config.saved_metrics_data_file, "w") as out_file:
+        metrics = {"mean_volume": mean_volume, "std_volume": std_volume, "trend": trend, "corr": corr, "number_of_records": number_of_records}
         json.dump(metrics, out_file, indent=4)
 
 
