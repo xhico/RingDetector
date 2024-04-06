@@ -21,7 +21,7 @@ def init_stream():
     Initialize PyAudio stream for audio input.
     """
 
-    logging.info("Initializing PyAudio stream...")
+    logging.info("Initializing PyAudio stream")
 
     # Create a global PyAudio instance
     global p
@@ -37,7 +37,7 @@ def close_stream():
     Close PyAudio stream.
     """
 
-    logging.info("Closing PyAudio stream...")
+    logging.info("Closing PyAudio stream")
 
     # Stop / Close the PyAudio stream
     if stream.is_active():
