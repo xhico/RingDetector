@@ -64,7 +64,7 @@ def main():
         volume_data.append({"counter": counter, "volume": volume})
 
         # Smooth volume_data
-        smoothed_data = smooth_data(list(volume_data))
+        volume_data_smooth = smooth_data(list(volume_data))
 
         # Wait for X seconds before taking the next reading
         time.sleep(0.001)
