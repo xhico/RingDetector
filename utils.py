@@ -2,7 +2,6 @@ import logging
 
 import numpy as np
 import pyaudio
-from sklearn.linear_model import LinearRegression
 
 import config
 
@@ -76,59 +75,41 @@ def get_volume():
     return volume
 
 
-def filtered_data(df):
+def smooth_data(volume_data):
     """
-    Filter data based on volume anomalies.
+    Smooths the volume data using a simple moving average.
 
-    This function calculates the mean and standard deviation of the volume data in the DataFrame (df).
-    It then defines a threshold for anomalies (e.g., 10 times the standard deviation from the mean)
-    and filters out data points where the volume deviates from the mean by more than the threshold.
-
-    Parameters:
-    df (pandas.DataFrame): Input DataFrame containing volume data.
+    Args:
+        volume_data (list): A list of dictionaries where each dictionary contains
+                            information about volume at different points in time.
 
     Returns:
-    pandas.DataFrame: Filtered DataFrame containing data points where volume is within the threshold.
-    float: Mean volume value.
-    float: Standard deviation of volume values.
+        list: A list of dictionaries where each dictionary contains the smoothed
+              volume data.
+
     """
+    # Initialize an empty list to store smoothed data
+    smoothed_data = []
 
-    # Calculate mean and standard deviation of volume
-    mean_volume = df['volume'].mean()
-    std_volume = df['volume'].std()
+    # Set the window size for the moving average
+    window_size = 5
 
-    # Define a threshold for anomalies (e.g., 3 standard deviations from the mean)
-    threshold = 10 * std_volume
+    # Extract volume values from each dictionary in the volume_data list
+    volumes = [float(entry["volume"]) for entry in volume_data]
 
-    # Filter out anomalies
-    filtered_df = df[abs(df['volume'] - mean_volume) < threshold]
+    # Iterate through each volume entry
+    for i in range(len(volumes)):
+        # Determine the start and end index for the window
+        start_index = max(0, i - window_size // 2)
+        end_index = min(len(volumes), i + window_size // 2 + 1)
 
-    return filtered_df, mean_volume, std_volume
+        # Extract the window of volume values
+        window = volumes[start_index:end_index]
 
+        # Calculate the average of the window
+        average = sum(window) / len(window)
 
-def calculate_metrics(df):
-    """
-    Calculate metrics related to volume data.
+        # Append the smoothed data to the smoothed_data list
+        smoothed_data.append({"counter": i, "volume": average})
 
-    This function calculates the rate of change of volume over time (slope of linear regression),
-    correlation between timestamps and volumes, using the provided DataFrame (df).
-
-    Parameters:
-    df (pandas.DataFrame): Input DataFrame containing timestamp and volume data.
-
-    Returns:
-    sklearn.linear_model.LinearRegression: Linear regression model fitted to the data.
-    float: Rate of change of volume over time (slope of linear regression).
-    float: Correlation between timestamps and volumes.
-    """
-
-    # Calculate rate of change of volume over time (slope of linear regression)
-    X = df['timestamp'].values.reshape(-1, 1)
-    y = df['volume'].values.reshape(-1, 1)
-    reg = LinearRegression().fit(X, y)
-    trend = reg.coef_[0][0]
-
-    # Calculate correlation between timestamps and volumes
-    corr = df['timestamp'].corr(df['volume'])
-
-    return reg, trend, corr
+    return smoothed_data

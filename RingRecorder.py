@@ -1,13 +1,12 @@
-import json
+import csv
 import logging
 import os
 import time
 import traceback
 
-import pandas as pd
-
 import config
-from utils import init_stream, close_stream, filtered_data, get_volume, calculate_metrics
+import utils
+from utils import init_stream, close_stream, get_volume
 
 
 def main():
@@ -22,47 +21,52 @@ def main():
     init_stream()
 
     # Log the start of recording volume data
-    logger.info("Recording Volume Data")
+    logger.info("Recording Volume Data | CTRL-C to stop")
 
     # Initialize an empty list to store volume data
     volume_data = []
 
-    # Record volume data for X seconds
-    start_timestamp = time.time_ns()
-    end_timestamp = start_timestamp + (4 * 1000000000)
-    while time.time_ns() < end_timestamp:
-        # Get the current timestamp
-        timestamp = time.time_ns()
+    # Record volume data
+    counter = 0
+    while True:
+        try:
 
-        # Get the current volume
-        volume = get_volume()
+            # Get the current volume
+            volume = get_volume()
 
-        # Append timestamp and volume to the list
-        volume_data.append({"timestamp": timestamp, "volume": volume})
+            # Log the current volume and timestamp
+            logger.info(f"{counter} | Volume - {volume}")
 
-        # Log the current volume and timestamp
-        logger.info(f"Timestamp - {timestamp} | Volume - {volume}")
+            # Append timestamp and volume to the list
+            volume_data.append({"counter": counter, "volume": volume})
 
-        # Wait for X seconds before taking the next reading
-        time.sleep(0.001)
+            # Wait for X seconds before taking the next reading
+            time.sleep(0.001)
+
+            # Increase counter
+            counter += 1
+        except KeyboardInterrupt:
+            logger.info("Stopping Recording")
+            break
 
     # Log the end of recording and the number of data points recorded
     number_of_records = len(volume_data)
     logger.info(f"Recorded {number_of_records} points")
 
-    # Load DataFrame
-    df = pd.DataFrame(volume_data)
+    # Smooth volume_data
+    smoothed_data = utils.smooth_data(volume_data)
 
-    # Filter anomalies
-    df, mean_volume, std_volume = filtered_data(df)
+    # Save volume_data
+    with open(config.saved_baseline_file, "w", newline='') as out_file:
+        writer = csv.DictWriter(out_file, fieldnames=["counter", "volume"])
+        writer.writeheader()
+        writer.writerows(volume_data)
 
-    # Calculate rate of change of volume over time (slope of linear regression)
-    reg, trend, corr = calculate_metrics(df)
-
-    # Saved metrics
-    with open(config.saved_metrics_data_file, "w") as out_file:
-        metrics = {"mean_volume": mean_volume, "std_volume": std_volume, "trend": trend, "corr": corr, "number_of_records": number_of_records}
-        json.dump(metrics, out_file, indent=4)
+    # Save volume_data
+    with open(config.saved_baseline_smooth_file, "w", newline='') as out_file:
+        writer = csv.DictWriter(out_file, fieldnames=["counter", "volume"])
+        writer.writeheader()
+        writer.writerows(smoothed_data)
 
 
 if __name__ == "__main__":
@@ -75,8 +79,6 @@ if __name__ == "__main__":
 
     try:
         main()
-    except KeyboardInterrupt:
-        logger.info("KeyboardInterrupt detected. Exiting...")
     except Exception as ex:
         logger.error(traceback.format_exc())
     finally:
