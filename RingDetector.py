@@ -69,7 +69,6 @@ def main():
         # Check if RING
         if corr_coef >= utils.CORRELATION_COEFFICIENT_THRESHOLD:
             logger.info(f"{volume} | {corr_coef}")
-            break
 
         # Wait for X seconds before taking the next reading
         time.sleep(0.001)
