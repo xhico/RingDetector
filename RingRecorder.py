@@ -1,11 +1,10 @@
-import csv
 import logging
 import os
 import time
 import traceback
 
 import config
-from utils import init_stream, close_stream, get_volume, smooth_data
+import utils
 
 
 def main():
@@ -17,7 +16,7 @@ def main():
     os.makedirs(config.data_folder, exist_ok=True)
 
     # Initialize PyAudio stream for audio input.
-    init_stream()
+    utils.init_stream()
 
     # Log the start of recording volume data
     logger.info("Recording Volume Data | CTRL-C to stop")
@@ -31,13 +30,13 @@ def main():
         try:
 
             # Get the current volume
-            volume = get_volume()
+            volume = utils.get_volume()
 
             # Log the current volume and timestamp
-            logger.info(f"{counter} | Volume - {volume}")
+            logger.info(f"Volume - {volume}")
 
             # Append timestamp and volume to the list
-            volume_data.append({"counter": counter, "volume": volume})
+            volume_data.append(volume)
 
             # Wait for X seconds before taking the next reading
             time.sleep(0.001)
@@ -53,19 +52,15 @@ def main():
     logger.info(f"Recorded {number_of_records} points")
 
     # Smooth volume_data
-    smoothed_data = smooth_data(volume_data)
+    smoothed_data = utils.smooth_data(volume_data)
 
     # Save baseline volume_data
-    with open(config.saved_baseline_file, "w", newline='') as out_file:
-        writer = csv.DictWriter(out_file, fieldnames=["counter", "volume"])
-        writer.writeheader()
-        writer.writerows(volume_data)
+    with open(config.saved_baseline_file, "w") as out_file:
+        out_file.writelines([str(volume) for volume in volume_data])
 
     # Save smooth baseline volume_data
-    with open(config.saved_baseline_smooth_file, "w", newline='') as out_file:
-        writer = csv.DictWriter(out_file, fieldnames=["counter", "volume"])
-        writer.writeheader()
-        writer.writerows(smoothed_data)
+    with open(config.saved_baseline_smooth_file, "w") as out_file:
+        out_file.writelines([str(volume) for volume in smoothed_data])
 
 
 if __name__ == "__main__":
@@ -81,5 +76,5 @@ if __name__ == "__main__":
     except Exception as ex:
         logger.error(traceback.format_exc())
     finally:
-        close_stream()
+        utils.close_stream()
         logger.info("End")

@@ -1,4 +1,3 @@
-import csv
 import logging
 import os
 import signal
@@ -7,8 +6,10 @@ import time
 import traceback
 from collections import deque
 
+import numpy as np
+
 import config
-from utils import init_stream, close_stream, get_volume, smooth_data
+import utils
 
 
 def signal_handler(sig, frame):
@@ -25,7 +26,7 @@ def signal_handler(sig, frame):
 
     if sig == signal.SIGTERM:
         logger.info("Script terminated by SIGTERM")
-        close_stream()
+        utils.close_stream()
         sys.exit(0)
 
 
@@ -39,32 +40,38 @@ def main():
 
     # Read Saved Smooth Baseline
     with open(config.saved_baseline_smooth_file) as in_file:
-        saved_baseline_smooth = [row for row in csv.DictReader(in_file)]
+        saved_baseline_smooth = [float(volume) for volume in in_file.read().splitlines()]
 
     # Initialize PyAudio stream for audio input.
-    init_stream()
+    utils.init_stream()
 
     # Log the start of recording volume data
     logger.info("Recording Volume Data")
 
     # Initialize volume_data with a baseline
-    volume = get_volume()
-    volume_data = deque([{"counter": i, "volume": volume} for i in range(len(saved_baseline_smooth))], maxlen=len(saved_baseline_smooth))
+    volume = utils.get_volume()
+    volume_data = deque([volume for _ in range(len(saved_baseline_smooth))], maxlen=len(saved_baseline_smooth))
 
     # Record volume_data
     counter = len(volume_data)
     while True:
         # Get the current volume
-        volume = get_volume()
+        volume = utils.get_volume()
 
         # Log the current volume and timestamp
         logger.info(f"{counter} | Volume - {volume}")
 
         # Append timestamp and volume to the list
-        volume_data.append({"counter": counter, "volume": volume})
+        volume_data.append(volume)
 
         # Smooth volume_data
-        volume_data_smooth = smooth_data(list(volume_data))
+        volume_data_smooth = utils.smooth_data(list(volume_data))
+
+        # Calculate correlation coefficient
+        corr_coef = np.corrcoef(volume_data_smooth, saved_baseline_smooth)[0, 1]
+        if corr_coef >= utils.CORRELATION_COEFFICIENT_THRESHOLD:
+            logger.info(f"RING | {corr_coef}")
+            break
 
         # Wait for X seconds before taking the next reading
         time.sleep(0.001)

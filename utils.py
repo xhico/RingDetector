@@ -13,6 +13,7 @@ saved_config = config.load_config()
 CHUNK_SIZE = saved_config["CHUNK_SIZE"]
 CHANNELS = saved_config["CHANNELS"]
 RATE = saved_config["RATE"]
+CORRELATION_COEFFICIENT_THRESHOLD = saved_config["CORRELATION_COEFFICIENT_THRESHOLD"]
 
 
 def init_stream():
@@ -80,36 +81,31 @@ def smooth_data(volume_data):
     Smooths the volume data using a simple moving average.
 
     Args:
-        volume_data (list): A list of dictionaries where each dictionary contains
-                            information about volume at different points in time.
+        volume_data (list): A list of dictionaries where each dictionary contains information about volume at different points in time.
 
     Returns:
-        list: A list of dictionaries where each dictionary contains the smoothed
-              volume data.
-
+        list: A list of dictionaries where each dictionary contains the smoothed volume data.
     """
+
     # Initialize an empty list to store smoothed data
     smoothed_data = []
 
     # Set the window size for the moving average
     window_size = 5
 
-    # Extract volume values from each dictionary in the volume_data list
-    volumes = [float(entry["volume"]) for entry in volume_data]
-
     # Iterate through each volume entry
-    for i in range(len(volumes)):
+    for i in range(len(volume_data)):
         # Determine the start and end index for the window
         start_index = max(0, i - window_size // 2)
-        end_index = min(len(volumes), i + window_size // 2 + 1)
+        end_index = min(len(volume_data), i + window_size // 2 + 1)
 
         # Extract the window of volume values
-        window = volumes[start_index:end_index]
+        window = volume_data[start_index:end_index]
 
         # Calculate the average of the window
         average = sum(window) / len(window)
 
         # Append the smoothed data to the smoothed_data list
-        smoothed_data.append({"counter": i, "volume": average})
+        smoothed_data.append(average)
 
     return smoothed_data
