@@ -16,7 +16,7 @@ def load_config():
     Returns:
         dict: Configuration settings loaded from the JSON file.
     """
-    
+
     with open(config_file) as in_file:
         config = json.load(in_file)
     return config
