@@ -45,20 +45,17 @@ def main():
     # Initialize PyAudio stream for audio input.
     utils.init_stream()
 
-    # Log the start of recording volume data
-    logger.info("Recording Volume Data")
-
-    # Initialize volume_data with a baseline
+    # Initialize a rolling volume_data with a baseline with the same length of the saved baseline
     volume = utils.get_volume()
     volume_data = deque([volume for _ in range(len(saved_baseline_smooth))], maxlen=len(saved_baseline_smooth))
+
+    # Log the start of recording volume data
+    logger.info("Recording Volume Data")
 
     # Record volume_data
     while True:
         # Get the current volume
         volume = utils.get_volume()
-
-        # Log the current volume and timestamp
-        logger.info(f"Volume - {volume}")
 
         # Append timestamp and volume to the list
         volume_data.append(volume)
@@ -68,8 +65,12 @@ def main():
 
         # Calculate correlation coefficient
         corr_coef = np.corrcoef(volume_data_smooth, saved_baseline_smooth)[0, 1]
+
+        # Log the current volume and timestamp
+        logger.info(f"{volume} | {corr_coef}")
+
+        # Check if RING
         if corr_coef >= utils.CORRELATION_COEFFICIENT_THRESHOLD:
-            logger.info(f"RING | {corr_coef}")
             break
 
         # Wait for X seconds before taking the next reading
