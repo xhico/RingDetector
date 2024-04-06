@@ -52,7 +52,7 @@ def main():
     logger.info(f"Recorded {number_of_records} points")
 
     # Smooth volume_data
-    smoothed_data = utils.smooth_data(volume_data)
+    volume_data_smooth = utils.smooth_data(volume_data)
 
     # Save baseline volume_data
     with open(config.saved_baseline_file, "w") as out_file:
@@ -60,7 +60,7 @@ def main():
 
     # Save smooth baseline volume_data
     with open(config.saved_baseline_smooth_file, "w") as out_file:
-        out_file.writelines([str(volume) for volume in smoothed_data])
+        out_file.writelines([str(volume) for volume in volume_data_smooth])
 
 
 if __name__ == "__main__":
