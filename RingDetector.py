@@ -53,6 +53,7 @@ def main():
     logger.info("Analyzing Volume Data")
 
     # Record volume_data
+    counter = 0
     while True:
         # Get the current volume
         volume = utils.get_volume()
@@ -69,9 +70,12 @@ def main():
         # Check if RING
         if corr_coef >= utils.CORRELATION_COEFFICIENT_THRESHOLD:
             logger.info(f"{volume} | {corr_coef}")
+            with open(os.path.join(config.data_folder, f"tmp_{counter}.data"), "w") as out_file:
+                out_file.writelines([str(volume) for volume in volume_data_smooth])
+            counter += 1
 
         # Wait for X seconds before taking the next reading
-        time.sleep(0.001)
+        time.sleep(0.01)
 
 
 if __name__ == "__main__":
