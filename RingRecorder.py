@@ -55,13 +55,13 @@ def main():
     # Smooth volume_data
     smoothed_data = smooth_data(volume_data)
 
-    # Save volume_data
+    # Save baseline volume_data
     with open(config.saved_baseline_file, "w", newline='') as out_file:
         writer = csv.DictWriter(out_file, fieldnames=["counter", "volume"])
         writer.writeheader()
         writer.writerows(volume_data)
 
-    # Save volume_data
+    # Save smooth baseline volume_data
     with open(config.saved_baseline_smooth_file, "w", newline='') as out_file:
         writer = csv.DictWriter(out_file, fieldnames=["counter", "volume"])
         writer.writeheader()
