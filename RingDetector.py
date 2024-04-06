@@ -77,17 +77,19 @@ def main():
             reg, trend, corr = calculate_metrics(df)
 
             # Compare metrics
-            if (mean_volume - saved_mean_volume) < 0.5 and (std_volume - saved_std_volume) < 5 and (abs(trend - saved_trend) < 0.1) and (abs(corr - saved_corr) < 0.1):
-                logger.info("Ring")
+            mean_calc = mean_volume - saved_mean_volume
+            std_calc = std_volume - saved_std_volume
+            trend_calc = abs(trend - saved_trend)
+            corr_calc = abs(corr - saved_corr)
+            if mean_calc < 0.8 and std_calc < 5 and trend_calc < 0.1 and corr_calc < 0.1:
+                logging.info(f"{timestamp} | {volume} | {mean_calc} | {std_calc} | {trend_calc} | {corr_calc}")
+                break
 
             # Remove the last entry
             volume_data.pop()
 
         # Shift all entries one position forward
         volume_data = volume_data + [{"timestamp": timestamp, "volume": volume}]
-
-        # Log the current volume and timestamp
-        # logger.info(f"Timestamp - {timestamp} | Volume - {volume} | Ring - {ring}")
 
         # Wait for X seconds before taking the next reading
         time.sleep(0.001)
