@@ -50,7 +50,7 @@ def main():
     volume_data = deque([volume for _ in range(len(saved_baseline_smooth))], maxlen=len(saved_baseline_smooth))
 
     # Log the start of recording volume data
-    logger.info("Recording Volume Data")
+    logger.info("Analyzing Volume Data")
 
     # Record volume_data
     while True:
@@ -66,11 +66,9 @@ def main():
         # Calculate correlation coefficient
         corr_coef = np.corrcoef(volume_data_smooth, saved_baseline_smooth)[0, 1]
 
-        # Log the current volume and timestamp
-        logger.info(f"{volume} | {corr_coef}")
-
         # Check if RING
         if corr_coef >= utils.CORRELATION_COEFFICIENT_THRESHOLD:
+            logger.info(f"{volume} | {corr_coef}")
             break
 
         # Wait for X seconds before taking the next reading
