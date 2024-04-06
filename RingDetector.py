@@ -8,7 +8,7 @@ import traceback
 from collections import deque
 
 import config
-from utils import init_stream, close_stream, get_volume
+from utils import init_stream, close_stream, get_volume, smooth_data
 
 
 def signal_handler(sig, frame):
@@ -57,11 +57,14 @@ def main():
         # Get the current volume
         volume = get_volume()
 
-        # Log the current volume and timestamp
-        logger.info(f"{counter} | Volume - {volume}")
-
         # Append timestamp and volume to the list
         volume_data.append({"counter": counter, "volume": volume})
+
+        # Smooth volume_data
+        smoothed_data = smooth_data(list(volume_data))
+
+        # Log the current volume and timestamp
+        logger.info(f"{counter} | Volume - {volume}")
 
         # Wait for X seconds before taking the next reading
         time.sleep(0.001)
