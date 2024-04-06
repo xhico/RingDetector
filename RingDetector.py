@@ -53,13 +53,12 @@ def main():
     volume_data = deque([volume for _ in range(len(saved_baseline_smooth))], maxlen=len(saved_baseline_smooth))
 
     # Record volume_data
-    counter = len(volume_data)
     while True:
         # Get the current volume
         volume = utils.get_volume()
 
         # Log the current volume and timestamp
-        logger.info(f"{counter} | Volume - {volume}")
+        logger.info(f"Volume - {volume}")
 
         # Append timestamp and volume to the list
         volume_data.append(volume)
@@ -75,9 +74,6 @@ def main():
 
         # Wait for X seconds before taking the next reading
         time.sleep(0.001)
-
-        # Increase counter
-        counter += 1
 
 
 if __name__ == "__main__":
