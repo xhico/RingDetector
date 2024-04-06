@@ -5,8 +5,7 @@ import time
 import traceback
 
 import config
-import utils
-from utils import init_stream, close_stream, get_volume
+from utils import init_stream, close_stream, get_volume, smooth_data
 
 
 def main():
@@ -54,7 +53,7 @@ def main():
     logger.info(f"Recorded {number_of_records} points")
 
     # Smooth volume_data
-    smoothed_data = utils.smooth_data(volume_data)
+    smoothed_data = smooth_data(volume_data)
 
     # Save volume_data
     with open(config.saved_baseline_file, "w", newline='') as out_file:
