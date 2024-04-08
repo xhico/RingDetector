@@ -65,14 +65,15 @@ def main():
         volume_data_smooth = utils.smooth_data(list(volume_data))
 
         # Calculate correlation coefficient
-        corr_coef = np.corrcoef(volume_data_smooth, saved_baseline_smooth)[0, 1]
+        volume_data_corr_coef = np.corrcoef(volume_data_smooth, saved_baseline_smooth)[0, 1]
 
         # Check if RING
-        if corr_coef >= utils.CORRELATION_COEFFICIENT_THRESHOLD:
-            logger.info(f"{volume} | {corr_coef}")
+        if volume_data_corr_coef >= utils.CORRELATION_COEFFICIENT_THRESHOLD:
+            logger.info(f"{volume} | {volume_data_corr_coef}")
             with open(os.path.join(config.data_folder, f"tmp_{counter}.data"), "w") as out_file:
-                out_file.writelines([str(volume) for volume in volume_data_smooth])
+                out_file.writelines([f"{idx},{str(volume)}\n" for idx, volume in enumerate(volume_data_smooth)])
             counter += 1
+            break
 
         # Wait for X seconds before taking the next reading
         time.sleep(0.01)
