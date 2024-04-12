@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 import pyaudio
+from scipy.signal import find_peaks
 
 import config
 
@@ -13,7 +14,8 @@ saved_config = config.load_config()
 CHUNK_SIZE = saved_config["CHUNK_SIZE"]
 CHANNELS = saved_config["CHANNELS"]
 RATE = saved_config["RATE"]
-CORRELATION_COEFFICIENT_THRESHOLD = saved_config["CORRELATION_COEFFICIENT_THRESHOLD"]
+PEAK_THRESHOLD = saved_config["PEAK_THRESHOLD"]
+FREQ_THRESHOLD = saved_config["FREQ_THRESHOLD"]
 
 
 def init_stream():
@@ -48,64 +50,12 @@ def close_stream():
     p.terminate()
 
 
-def get_volume():
-    """
-    Get current volume from the microphone.
-
-    Returns:
-        float: The mean absolute volume value.
-    """
-
-    # Start streaming audio from the microphone
-    if stream.is_stopped():
-        stream.start_stream()
-
-    # Read audio data from the stream
-    data = stream.read(CHUNK_SIZE, exception_on_overflow=True)
-
-    # Convert the binary data into a numpy array of int16
-    data = np.frombuffer(data, dtype=np.int16)
-
-    # Calculate the mean absolute volume
-    volume = np.abs(data).mean()
-
-    # Stop streaming audio
-    if stream.is_active():
-        stream.stop_stream()
-
-    return volume
+def detect_peaks(audio_data, threshold):
+    peaks, _ = find_peaks(audio_data, height=threshold)
+    return peaks
 
 
-def smooth_data(volume_data):
-    """
-    Smooths the volume data using a simple moving average.
-
-    Args:
-        volume_data (list): A list of dictionaries where each dictionary contains information about volume at different points in time.
-
-    Returns:
-        list: A list of dictionaries where each dictionary contains the smoothed volume data.
-    """
-
-    # Initialize an empty list to store smoothed data
-    smoothed_data = []
-
-    # Set the window size for the moving average
-    window_size = 5
-
-    # Iterate through each volume entry
-    for i in range(len(volume_data)):
-        # Determine the start and end index for the window
-        start_index = max(0, i - window_size // 2)
-        end_index = min(len(volume_data), i + window_size // 2 + 1)
-
-        # Extract the window of volume values
-        window = volume_data[start_index:end_index]
-
-        # Calculate the average of the window
-        average = sum(window) / len(window)
-
-        # Append the smoothed data to the smoothed_data list
-        smoothed_data.append(average)
-
-    return smoothed_data
+def compute_fft(data, rate):
+    fft_data = np.fft.fft(data)
+    freqs = np.fft.fftfreq(len(data), 1 / rate)
+    return freqs[:len(freqs) // 2], np.abs(fft_data)[:len(fft_data) // 2]
